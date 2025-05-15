@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sistem Penjualan & Pengeluaran Kafe</title>
+  <style>
+    /* Reset and base styles */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #f7f8fa;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1, h2, h3 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+    h3 {
+      margin-top: 0;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(44, 62, 80, 0.1);
+      padding: 20px 25px;
+      max-width: 520px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    select, input[type="number"], input[type="text"], input[type="date"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1.8px solid #d6d9db;
+      font-size: 1rem;
+      outline-offset: 2px;
+      transition: border-color 0.2s ease-in-out;
+      background: white;
+      appearance: none;
+    }
+    select:focus,
+    input[type="number"]:focus,
+    input[type="text"]:focus,
+    input[type="date"]:focus {
+      border-color: #3498db;
+      outline: none;
+    }
+    button {
+      background: #3498db;
+      border: none;
+      padding: 12px;
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+      width: 100%;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .items-list {
+      max-height: 240px;
+      overflow-y: auto;
+      border-radius: 10px;
+      border: 1.8px solid #d6d9db;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 12px 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #3498db;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tbody tr:nth-child(even) {
+      background-color: #f4f6f6;
+    }
+    .total-price {
+      font-weight: 700;
+      font-size: 1.2rem;
+      text-align: right;
+      color: #27ae60;
+    }
+    .buttons-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .buttons-row button {
+      flex: 1;
+      padding: 10px 0;
+      min-width: 130px;
+    }
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.45);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+      z-index: 10;
+    }
+    .modal.active {
+      display: flex;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+      padding: 20px;
+      position: relative;
+    }
+    .modal-content h2 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+    .modal-close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: transparent;
+      border: none;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #777;
+      cursor: pointer;
+      user-select: none;
+    }
+    .history-transaction {
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+    }
+    .history-transaction:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .history-transaction h3 {
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 5px;
+      color: #2980b9;
+    }
+    .history-items table {
+      font-size: 0.85rem;
+    }
+    .history-items th, .history-items td {
+      padding: 6px 6px;
+    }
+    .empty-message {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      font-style: italic;
+    }
+    select {
+      background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%23777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 15px 15px;
+    }
+    #item-price[readonly], #expense-amount[readonly] {
+      background-color: #e9ecef;
+      cursor: not-allowed;
+    }
+    /* Navigation header */
+    nav {
+      width: 100%;
+      max-width: 520px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    nav button {
+      flex: 1;
+      font-size: 1rem;
+      padding: 10px;
+      border-radius: 10px;
+      background: #3498db;
+      border: none;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    nav button:hover {
+      background: #2980b9;
+    }
+    nav button.active {
+      background: #1c5980;
+      cursor: default;
+    }
+    /* Home buttons */
+    #home-page {
+      text-align: center;
+    }
+    #home-page button {
+      width: 50%;
+      margin: 10px auto;
+      font-size: 1.25rem;
+    }
+    /* Summary box in home */
+    #summary-box {
+      margin-top: 30px;
+      padding: 15px 20px;
+      background: #e8f5e9;
+      border-radius: 12px;
+      color: #2e7d32;
+      font-weight: 700;
+      font-size: 1.2rem;
+      box-shadow: inset 0 0 8px rgba(46, 125, 50, 0.25);
+    }
+  </style>
+</head>
+<body>
+  <h1>Sistem Penjualan & Pengeluaran Kafe</h1>
+
+  <nav aria-label="Navigasi halaman">
+    <button id="nav-home" class="active" aria-current="page">Beranda</button>
+    <button id="nav-penjualan">Penjualan</button>
+    <button id="nav-pengeluaran">Pengeluaran</button>
+  </nav>
+
+  <!-- Home page -->
+  <section id="home-page" class="container" role="main" aria-label="Halaman Beranda">
+    <h2>Selamat Datang</h2>
+    <button id="btn-go-penjualan" aria-label="Pergi ke halaman penjualan">Mulai Penjualan</button>
+    <button id="btn-go-pengeluaran" aria-label="Pergi ke halaman pengeluaran" style="background:#e74c3c; margin-top: 10px;">Input Pengeluaran</button>
+
+    <div id="summary-box" aria-live="polite" aria-atomic="true" tabindex="0">
+      <div>Total Pendapatan Penjualan: <span id="total-sales">Rp 0</span></div>
+      <div>Total Pengeluaran: <span id="total-expenses">Rp 0</span></div>
+      <div style="margin-top: 8px; font-size: 1.3rem;">
+        <strong>Saldo Bersih: <span id="net-balance">Rp 0</span></strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- Penjualan page -->
+  <section id="penjualan-page" class="container" role="main" aria-label="Halaman Penjualan" hidden>
+    <h2>Penjualan</h2>
+    <form id="item-form" autocomplete="off">
+      <label for="item-select">Pilih Barang</label>
+      <select id="item-select" name="itemSelect" required aria-required="true" aria-label="Pilih barang untuk dibeli">
+        <!-- Options added dynamically -->
+      </select>
+      
+      <label for="item-qty">Kuantitas</label>
+      <input type="number" id="item-qty" name="itemQty" placeholder="Contoh: 2" min="1" required aria-required="true" />
+      
+      <label for="item-price">Harga Satuan (Rp)</label>
+      <input type="number" id="item-price" name="itemPrice" readonly aria-readonly="true" />
+      
+      <button type="submit" aria-label="Tambahkan barang ke daftar">Tambah Barang</button>
+    </form>
+
+    <section aria-label="Daftar barang yang sudah ditambahkan" class="items-list" tabindex="0">
+      <table aria-live="polite" aria-relevant="all">
+        <thead>
+          <tr>
+            <th>Nama Barang</th>
+            <th>Kuantitas</th>
+            <th>Harga Satuan (Rp)</th>
+            <th>Total Harga (Rp)</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="items-table-body">
+          <tr><td colspan="5" class="empty-message">Belum ada barang yang ditambahkan.</td></tr>
+        </tbody>
+      </table>
+    </section>
+    
+    <div class="total-price" aria-live="polite" aria-atomic="true" id="total-amount">Total: Rp 0</div>
+    
+    <div class="buttons-row">
+      <button id="save-transaction" title="Simpan transaksi saat ini">Simpan Transaksi</button>
+      <button id="download-spreadsheet" title="Unduh spreadsheet transaksi" style="background:#27ae60;">Unduh Spreadsheet</button>
+      <button id="reset-session" title="Reset data transaksi saat ini" style="background:#e74c3c;">Reset</button>
+      <button id="show-history" title="Tampilkan riwayat transaksi" style="flex-basis: 100%; background:#34495e; margin-top: 10px;">Tampilkan Riwayat Penjualan</button>
+    </div>
+
+  </section>
+
+  <!-- Pengeluaran page -->
+  <section id="pengeluaran-page" class="container" role="main" aria-label="Halaman Pengeluaran" hidden>
+    <h2>Input Pengeluaran</h2>
+    <form id="expense-form" autocomplete="off">
+      <label for="expense-desc">Keterangan Pengeluaran</label>
+      <input type="text" id="expense-desc" name="expenseDesc" placeholder="Contoh: Pembelian bahan kopi" required aria-required="true" />
+      
+      <label for="expense-amount">Jumlah Pengeluaran (Rp)</label>
+      <input type="number" id="expense-amount" name="expenseAmount" placeholder="Contoh: 50000" min="1" required aria-required="true" />
+      
+      <label for="expense-date">Tanggal</label>
+      <input type="date" id="expense-date" name="expenseDate" required aria-required="true" />
+
+      <button type="submit">Tambah Pengeluaran</button>
+    </form>
+
+    <section aria-label="Daftar pengeluaran yang sudah ditambahkan" class="items-list" tabindex="0" style="margin-top: 15px;">
+      <table aria-live="polite" aria-relevant="all">
+        <thead>
+          <tr>
+            <th>Keterangan</th>
+            <th>Jumlah (Rp)</th>
+            <th>Tanggal</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="expenses-table-body">
+          <tr><td colspan="4" class="empty-message">Belum ada pengeluaran yang ditambahkan.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <div class="total-price" aria-live="polite" aria-atomic="true" id="total-expense-amount">Total Pengeluaran: Rp 0</div>
+    
+    <div class="buttons-row">
+      <button id="save-expenses" title="Simpan pengeluaran saat ini">Simpan Pengeluaran</button>
+      <button id="reset-expense-session" title="Reset data pengeluaran saat ini" style="background:#e74c3c;">Reset</button>
+      <button id="show-expense-history" title="Tampilkan riwayat pengeluaran" style="flex-basis: 100%; background:#34495e; margin-top: 10px;">Tampilkan Riwayat Pengeluaran</button>
+    </div>
+  </section>
+
+  <!-- Modal for history -->
+  <div class="modal" id="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-title" aria-describedby="history-desc">
+    <div class="modal-content">
+      <button class="modal-close" id="close-history" aria-label="Tutup riwayat transaksi">&times;</button>
+      <h2 id="history-title">Riwayat Transaksi</h2>
+      <div id="history-desc">
+        <div id="history-container" tabindex="0">
+          <!-- History transactions will be inserted here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    // Predefined product catalog for penjualan
+    const productCatalog = [
+      {name: 'Kopi Latte', price: 20000},
+      {name: 'Kopi Hitam', price: 15000},
+      {name: 'Teh Manis', price: 10000},
+      {name: 'Roti Bakar', price: 12000},
+      {name: 'Sandwich', price: 25000},
+      {name: 'Jus Jeruk', price: 18000},
+      {name: 'Es Teh', price: 9000},
+      {name: 'Croissant', price: 22000},
+      {name: 'Cappuccino', price: 23000},
+      {name: 'Espresso', price: 18000}
+    ];
+
+    // Navigation elements
+    const navHomeBtn = document.getElementById('nav-home');
+    const navPenjualanBtn = document.getElementById('nav-penjualan');
+    const navPengeluaranBtn = document.getElementById('nav-pengeluaran');
+
+    // Pages / sections
+    const homePage = document.getElementById('home-page');
+    const penjualanPage = document.getElementById('penjualan-page');
+    const pengeluaranPage = document.getElementById('pengeluaran-page');
+
+    // Home page summary elements
+    const totalSalesEl = document.getElementById('total-sales');
+    const totalExpensesEl = document.getElementById('total-expenses');
+    const netBalanceEl = document.getElementById('net-balance');
+
+    // Home page buttons
+    const btnGoPenjualan = document.getElementById('btn-go-penjualan');
+    const btnGoPengeluaran = document.getElementById('btn-go-pengeluaran');
+
+    // Penjualan elements
+    const itemSelect = document.getElementById('item-select');
+    const priceInput = document.getElementById('item-price');
+    const qtyInput = document.getElementById('item-qty');
+    const form = document.getElementById('item-form');
+    const tbody = document.getElementById('items-table-body');
+    const totalAmountEl = document.getElementById('total-amount');
+    const saveBtn = document.getElementById('save-transaction');
+    const resetBtn = document.getElementById('reset-session');
+    const showHistoryBtn = document.getElementById('show-history');
+    const downloadBtn = document.getElementById('download-spreadsheet');
+
+    // Pengeluaran elements
+    const expenseForm = document.getElementById('expense-form');
+    const expenseDescInput = document.getElementById('expense-desc');
+    const expenseAmountInput = document.getElementById('expense-amount');
+    const expenseDateInput = document.getElementById('expense-date');
+    const expensesTbody = document.getElementById('expenses-table-body');
+    const totalExpenseAmountEl = document.getElementById('total-expense-amount');
+    const saveExpensesBtn = document.getElementById('save-expenses');
+    const resetExpenseBtn = document.getElementById('reset-expense-session');
+    const showExpenseHistoryBtn = document.getElementById('show-expense-history');
+
+    // History modal elements
+    const historyModal = document.getElementById('history-modal');
+    const closeHistoryBtn = document.getElementById('close-history');
+    const historyContainer = document.getElementById('history-container');
+    const historyTitle = document.getElementById('history-title');
+
+    // Data stores for session
+    let salesItems = [];
+    let expenseItems = [];
+
+    // --- Navigation and page display functions ---
+    function resetActiveNav() {
+      navHomeBtn.classList.remove('active');
+      navPenjualanBtn.classList.remove('active');
+      navPengeluaranBtn.classList.remove('active');
+    }
+
+    function showPage(page) {
+      homePage.hidden = true;
+      penjualanPage.hidden = true;
+      pengeluaranPage.hidden = true;
+
+      if (page === 'home') {
+        homePage.hidden = false;
+        resetActiveNav();
+        navHomeBtn.classList.add('active');
+      } else if (page === 'penjualan') {
+        penjualanPage.hidden = false;
+        resetActiveNav();
+        navPenjualanBtn.classList.add('active');
+      } else if (page === 'pengeluaran') {
+        pengeluaranPage.hidden = false;
+        resetActiveNav();
+        navPengeluaranBtn.classList.add('active');
+      }
+    }
+
+    navHomeBtn.addEventListener('click', () => showPage('home'));
+    navPenjualanBtn.addEventListener('click', () => showPage('penjualan'));
+    navPengeluaranBtn.addEventListener('click', () => showPage('pengeluaran'));
+
+    btnGoPenjualan.addEventListener('click', () => showPage('penjualan'));
+    btnGoPengeluaran.addEventListener('click', () => showPage('pengeluaran'));
+
+    // --- Utility functions ---
+    function formatIDR(amount) {
+      return amount.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
+    }
+
+    // --- PENJUALAN (Sales) Logic ---
+    function populateProductSelect() {
+      itemSelect.innerHTML = '';
+      productCatalog.forEach((product, index) => {
+        const option = document.createElement('option');
+        option.value = index; // use index for lookup
+        option.textContent = product.name;
+        itemSelect.appendChild(option);
+      });
+    }
+
+    function updatePriceInput() {
+      const selectedIndex = itemSelect.selectedIndex;
+      if (selectedIndex < 0 || selectedIndex >= productCatalog.length) {
+        priceInput.value = '';
+        return;
+      }
+      priceInput.value = productCatalog[selectedIndex].price;
+    }
+
+    function recalcSalesTotal() {
+      let total = 0;
+      salesItems.forEach(item => {
+        total += item.qty * item.price;
+      });
+      totalAmountEl.textContent = `Total: ${formatIDR(total)}`;
+      return total;
+    }
+
+    function renderSalesItems() {
+      tbody.innerHTML = '';
+      if (salesItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-message">Belum ada barang yang ditambahkan.</td></tr>`;
+        recalcSalesTotal();
+        return;
+      }
+      salesItems.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.name}</td>
+          <td>${item.qty}</td>
+          <td>${formatIDR(item.price)}</td>
+          <td style="font-weight:600; color:#27ae60;">${formatIDR(item.qty * item.price)}</td>
+          <td><button class="delete-sale" aria-label="Hapus barang ${item.name}" data-index="${index}" style="background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">Hapus</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      recalcSalesTotal();
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const selectedIndex = itemSelect.selectedIndex;
+      if (selectedIndex < 0) {
+        alert('Mohon pilih barang.');
+        return;
+      }
+      const product = productCatalog[selectedIndex];
+      const qty = Number(qtyInput.value);
+      if (qty < 1 || isNaN(qty)) {
+        alert('Mohon isi kuantitas dengan benar (minimal 1).');
+        return;
+      }
+      salesItems.push({
+        name: product.name,
+        qty,
+        price: product.price
+      });
+      renderSalesItems();
+      form.reset();
+      updatePriceInput();
+      qtyInput.focus();
+    });
+
+    tbody.addEventListener('click', (e) => {
+      if (e.target.classList.contains('delete-sale')) {
+        const idx = Number(e.target.dataset.index);
+        if (!isNaN(idx)) {
+          salesItems.splice(idx, 1);
+          renderSalesItems();
+        }
+      }
+    });
+
+    saveBtn.addEventListener('click', () => {
+      if (salesItems.length === 0) {
+        alert('Tidak ada barang untuk disimpan.');
+        return;
+      }
+      let existingHistoryJSON = localStorage.getItem('kafeSalesHistory');
+      let existingHistory = existingHistoryJSON ? JSON.parse(existingHistoryJSON) : [];
+      const transaction = {
+        id: Date.now(),
+        date: new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' }),
+        items: [...salesItems]
+      };
+      existingHistory.push(transaction);
+      localStorage.setItem('kafeSalesHistory', JSON.stringify(existingHistory));
+      alert('Transaksi berhasil disimpan.');
+      salesItems = [];
+      renderSalesItems();
+      updateHomeSummary();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      if (salesItems.length === 0) return;
+      if (confirm('Apakah Anda yakin ingin mereset data transaksi saat ini?')) {
+        salesItems = [];
+        renderSalesItems();
+      }
+    });
+
+    showHistoryBtn.addEventListener('click', () => {
+      renderSalesHistory();
+      historyModal.classList.add('active');
+      historyTitle.textContent = "Riwayat Penjualan";
+      historyModal.focus();
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (salesItems.length === 0) {
+        alert('Tidak ada barang untuk diunduh.');
+        return;
+      }
+      let csvContent = 'Nama Barang,Kuantitas,Harga Satuan (Rp),Total Harga (Rp)\r\n';
+      salesItems.forEach(item => {
+        const row = [`"${item.name}"`, item.qty, item.price, item.qty * item.price].join(',');
+        csvContent += row + '\r\n';
+      });
+      const total = salesItems.reduce((acc, i) => acc + i.qty * i.price, 0);
+      csvContent += `,,,${total}\r\n`;
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const dateStr = new Date().toISOString().slice(0,10);
+      link.download = `transaksi_kafe_${dateStr}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    });
+
+    // --- PENGELUARAN (Expenses) Logic ---
+    function recalcExpenseTotal() {
+      let total = 0;
+      expenseItems.forEach(e => {
+        total += e.amount;
+      });
+      totalExpenseAmountEl.textContent = `Total Pengeluaran: ${formatIDR(total)}`;
+      return total;
+    }
+
+    function renderExpenseItems() {
+      expensesTbody.innerHTML = '';
+      if (expenseItems.length === 0) {
+        expensesTbody.innerHTML = `<tr><td colspan="4" class="empty-message">Belum ada pengeluaran yang ditambahkan.</td></tr>`;
+        recalcExpenseTotal();
+        return;
+      }
+      expenseItems.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.desc}</td>
+          <td>${formatIDR(item.amount)}</td>
+          <td>${item.date}</td>
+          <td><button class="delete-expense" aria-label="Hapus pengeluaran ${item.desc}" data-index="${index}" style="background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">Hapus</button></td>
+        `;
+        expensesTbody.appendChild(tr);
+      });
+      recalcExpenseTotal();
+    }
+
+    expenseForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const desc = expenseDescInput.value.trim();
+      const amount = Number(expenseAmountInput.value);
+      const date = expenseDateInput.value;
+      if (!desc) {
+        alert('Mohon isi keterangan pengeluaran.');
+        return;
+      }
+      if (amount <= 0 || isNaN(amount)) {
+        alert('Mohon isi jumlah pengeluaran dengan benar (lebih dari 0).');
+        return;
+      }
+      if (!date) {
+        alert('Mohon pilih tanggal pengeluaran.');
+        return;
+      }
+      expenseItems.push({
+        desc,
+        amount,
+        date
+      });
+      renderExpenseItems();
+      expenseForm.reset();
+      expenseDateInput.valueAsDate = new Date();
+      expenseDescInput.focus();
+    });
+
+    expensesTbody.addEventListener('click', (e) => {
+      if (e.target.classList.contains('delete-expense')) {
+        const idx = Number(e.target.dataset.index);
+        if (!isNaN(idx)) {
+          expenseItems.splice(idx, 1);
+          renderExpenseItems();
+        }
+      }
+    });
+
+    saveExpensesBtn.addEventListener('click', () => {
+      if (expenseItems.length === 0) {
+        alert('Tidak ada pengeluaran untuk disimpan.');
+        return;
+      }
+      let existingExpenseJSON = localStorage.getItem('kafeExpenseHistory');
+      let existingExpenses = existingExpenseJSON ? JSON.parse(existingExpenseJSON) : [];
+      const expenseTransaction = {
+        id: Date.now(),
+        date: new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' }),
+        items: [...expenseItems]
+      };
+      existingExpenses.push(expenseTransaction);
+      localStorage.setItem('kafeExpenseHistory', JSON.stringify(existingExpenses));
+      alert('Pengeluaran berhasil disimpan.');
+      expenseItems = [];
+      renderExpenseItems();
+      updateHomeSummary();
+    });
+
+    resetExpenseBtn.addEventListener('click', () => {
+      if (expenseItems.length === 0) return;
+      if (confirm('Apakah Anda yakin ingin mereset data pengeluaran saat ini?')) {
+        expenseItems = [];
+        renderExpenseItems();
+      }
+    });
+
+    showExpenseHistoryBtn.addEventListener('click', () => {
+      renderExpenseHistory();
+      historyModal.classList.add('active');
+      historyTitle.textContent = "Riwayat Pengeluaran";
+      historyModal.focus();
+    });
+
+    // --- History modal handling ---
+    closeHistoryBtn.addEventListener('click', () => {
+      historyModal.classList.remove('active');
+      // Return focus to nav home for accessibility
+      navHomeBtn.focus();
+    });
+
+    historyModal.addEventListener('click', (e) => {
+      if (e.target === historyModal) {
+        historyModal.classList.remove('active');
+        navHomeBtn.focus();
+      }
+    });
+
+    // Render sales history in modal
+    function renderSalesHistory() {
+      historyContainer.innerHTML = '';
+      let historyJSON = localStorage.getItem('kafeSalesHistory');
+      let history = historyJSON ? JSON.parse(historyJSON) : [];
+      if (history.length === 0) {
+        historyContainer.innerHTML = '<p class="empty-message">Belum ada riwayat transaksi penjualan.</p>';
+        return;
+      }
+
+      history.slice().reverse().forEach(transaction => {
+        const div = document.createElement('div');
+        div.classList.add('history-transaction');
+
+        const title = document.createElement('h3');
+        title.textContent = `Transaksi pada: ${transaction.date}`;
+        div.appendChild(title);
+
+        const tbl = document.createElement('table');
+        tbl.classList.add('history-items');
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+          <tr>
+            <th>Barang</th><th>Kuantitas</th><th>Harga Satuan</th><th>Total Harga</th>
+          </tr>`;
+        tbl.appendChild(thead);
+
+        const tbodyHist = document.createElement('tbody');
+        transaction.items.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.qty}</td>
+            <td>${formatIDR(item.price)}</td>
+            <td>${formatIDR(item.qty * item.price)}</td>
+          `;
+          tbodyHist.appendChild(tr);
+        });
+        tbl.appendChild(tbodyHist);
+
+        const totalPerTransaction = transaction.items.reduce((acc, i) => acc + i.qty * i.price, 0);
+        const totalDiv = document.createElement('div');
+        totalDiv.style.textAlign = 'right';
+        totalDiv.style.fontWeight = '700';
+        totalDiv.style.color = '#27ae60';
+        totalDiv.style.marginTop = '8px';
+        totalDiv.textContent = `Total: ${formatIDR(totalPerTransaction)}`;
+
+        div.appendChild(tbl);
+        div.appendChild(totalDiv);
+
+        historyContainer.appendChild(div);
+      });
+    }
+
+    // Render expense history in modal
+    function renderExpenseHistory() {
+      historyContainer.innerHTML = '';
+      let historyJSON = localStorage.getItem('kafeExpenseHistory');
+      let history = historyJSON ? JSON.parse(historyJSON) : [];
+      if (history.length === 0) {
+        historyContainer.innerHTML = '<p class="empty-message">Belum ada riwayat pengeluaran.</p>';
+        return;
+      }
+
+      history.slice().reverse().forEach(transaction => {
+        const div = document.createElement('div');
+        div.classList.add('history-transaction');
+
+        const title = document.createElement('h3');
+        title.textContent = `Pengeluaran pada: ${transaction.date}`;
+        div.appendChild(title);
+
+        const tbl = document.createElement('table');
+        tbl.classList.add('history-items');
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+          <tr>
+            <th>Keterangan</th><th>Jumlah (Rp)</th><th>Tanggal</th>
+          </tr>`;
+        tbl.appendChild(thead);
+
+        const tbodyHist = document.createElement('tbody');
+        transaction.items.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.desc}</td>
+            <td>${formatIDR(item.amount)}</td>
+            <td>${item.date}</td>
+          `;
+          tbodyHist.appendChild(tr);
+        });
+        tbl.appendChild(tbodyHist);
+
+        const totalPerTransaction = transaction.items.reduce((acc, i) => acc + i.amount, 0);
+        const totalDiv = document.createElement('div');
+        totalDiv.style.textAlign = 'right';
+        totalDiv.style.fontWeight = '700';
+        totalDiv.style.color = '#c0392b';
+        totalDiv.style.marginTop = '8px';
+        totalDiv.textContent = `Total Pengeluaran: ${formatIDR(totalPerTransaction)}`;
+
+        div.appendChild(tbl);
+        div.appendChild(totalDiv);
+
+        historyContainer.appendChild(div);
+      });
+    }
+
+    // Update home page summary totals for sales, expenses, and net balance
+    function updateHomeSummary() {
+      let salesHistoryJSON = localStorage.getItem('kafeSalesHistory');
+      let salesHistory = salesHistoryJSON ? JSON.parse(salesHistoryJSON) : [];
+      const totalSales = salesHistory.reduce((acc, tx) => {
+        return acc + tx.items.reduce((a, i) => a + i.qty * i.price, 0);
+      }, 0);
+
+      let expenseHistoryJSON = localStorage.getItem('kafeExpenseHistory');
+      let expenseHistory = expenseHistoryJSON ? JSON.parse(expenseHistoryJSON) : [];
+      const totalExpenses = expenseHistory.reduce((acc, tx) => {
+        return acc + tx.items.reduce((a, i) => a + i.amount, 0);
+      }, 0);
+
+      totalSalesEl.textContent = formatIDR(totalSales);
+      totalExpensesEl.textContent = formatIDR(totalExpenses);
+      netBalanceEl.textContent = formatIDR(totalSales - totalExpenses);
+    }
+
+    // Initialize date in expense form to today
+    function initExpenseDate() {
+      expenseDateInput.valueAsDate = new Date();
+      expenseDescInput.focus();
+    }
+
+    // Initial setup
+    populateProductSelect();
+    updatePriceInput();
+    renderSalesItems();
+    renderExpenseItems();
+    updateHomeSummary();
+    initExpenseDate();
+
+  })();
+  </script>
+</body>
+</html>
+
